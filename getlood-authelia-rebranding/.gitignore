@@ -1,0 +1,44 @@
+# Getlood Authelia Rebranding - Gitignore
+
+# Certificates (NEVER commit private keys!)
+certs/
+*.pem
+*.key
+*.crt
+*.csr
+*.srl
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Configuration files with secrets (temporary copies)
+*-with-secrets.yaml
+*.yaml.tmp
+*.yml.tmp
+
+# Kubernetes secrets dumps
+secrets/
+*.secret
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Test files
+test-*.yaml
+test-*.sh
