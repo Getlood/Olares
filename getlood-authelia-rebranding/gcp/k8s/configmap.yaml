@@ -1,0 +1,56 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: getlood-authelia-config
+  namespace: auth-system
+  labels:
+    app: getlood-authelia
+    component: authentication
+data:
+  configuration.yml: |
+    # This configuration will be loaded from the Docker image
+    # at /etc/authelia/configuration.template.yml
+    # Environment variables will be substituted at runtime
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: getlood-authelia-assets
+  namespace: auth-system
+  labels:
+    app: getlood-authelia
+    component: authentication
+data:
+  # Logo SVG
+  logo.svg: |
+    <svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="getloodGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#00CC99;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      <circle cx="30" cy="30" r="20" fill="url(#getloodGradient)"/>
+      <path d="M 30 15 L 30 45 M 20 25 L 40 25 M 20 35 L 40 35" stroke="white" stroke-width="3" stroke-linecap="round"/>
+      <text x="60" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#0066FF">
+        Getlood
+      </text>
+    </svg>
+
+  # Theme CSS
+  theme.css: |
+    :root {
+      --getlood-primary: #0066FF;
+      --getlood-secondary: #00CC99;
+      --getlood-gradient: linear-gradient(135deg, #0066FF 0%, #00CC99 100%);
+    }
+    body {
+      background: var(--getlood-gradient);
+    }
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 102, 255, 0.1);
+    }

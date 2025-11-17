@@ -1,0 +1,182 @@
+---
+version: '3.8'
+
+# Getlood Authelia - Docker Compose for Local Development
+# This allows you to test the Getlood Authelia setup locally before deploying to GCP
+
+services:
+  # Authelia with Getlood branding
+  authelia:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: getlood-authelia
+    hostname: authelia
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    networks:
+      - getlood-network
+    environment:
+      - TZ=UTC
+      - GETLOOD_BRANDING=enabled
+      - AUTHELIA_LDAP_URL=ldap://lldap:3890
+      - AUTHELIA_LDAP_BASE_DN=dc=getlood,dc=com
+      - AUTHELIA_LDAP_USER=cn=admin,dc=getlood,dc=com
+      - AUTHELIA_LDAP_PASSWORD=adminpassword
+      - AUTHELIA_SESSION_DOMAIN=localhost
+      - AUTHELIA_REDIS_HOST=redis
+      - AUTHELIA_REDIS_PORT=6379
+      - AUTHELIA_POSTGRES_HOST=postgres
+      - AUTHELIA_POSTGRES_PORT=5432
+      - AUTHELIA_POSTGRES_DATABASE=authelia
+      - AUTHELIA_POSTGRES_USERNAME=authelia
+      - AUTHELIA_SMTP_HOST=mailcatcher
+      - AUTHELIA_SMTP_PORT=1025
+      - AUTHELIA_SMTP_USERNAME=
+      - AUTHELIA_SMTP_CHECK_ADDRESS=test@localhost
+    volumes:
+      - ./config-template.yaml:/config/configuration.yml:ro
+      - ../assets:/app/public/assets/getlood:ro
+      - authelia-data:/var/lib/authelia
+    secrets:
+      - jwt_secret
+      - session_secret
+      - encryption_key
+      - hmac_secret
+      - pg_password
+    depends_on:
+      - redis
+      - postgres
+      - lldap
+      - mailcatcher
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9091/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Redis for session storage
+  redis:
+    image: redis:7-alpine
+    container_name: getlood-redis
+    hostname: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - getlood-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL for Authelia storage
+  postgres:
+    image: postgres:16-alpine
+    container_name: getlood-postgres
+    hostname: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    networks:
+      - getlood-network
+    environment:
+      - POSTGRES_DB=authelia
+      - POSTGRES_USER=authelia
+      - POSTGRES_PASSWORD=authelia_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authelia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # LLDAP for LDAP authentication
+  lldap:
+    image: lldap/lldap:stable
+    container_name: getlood-lldap
+    hostname: lldap
+    restart: unless-stopped
+    ports:
+      - "3890:3890"
+      - "17170:17170"
+    networks:
+      - getlood-network
+    environment:
+      - LLDAP_JWT_SECRET=changeThisJwtSecret
+      - LLDAP_LDAP_USER_PASS=adminpassword
+      - LLDAP_LDAP_BASE_DN=dc=getlood,dc=com
+      - LLDAP_DATABASE_URL=sqlite:///data/lldap.db
+    volumes:
+      - lldap-data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3890"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MailCatcher for testing email notifications
+  mailcatcher:
+    image: sj26/mailcatcher:latest
+    container_name: getlood-mailcatcher
+    hostname: mailcatcher
+    restart: unless-stopped
+    ports:
+      - "1080:1080"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - getlood-network
+
+  # Nginx reverse proxy (optional - for testing with SSL)
+  nginx:
+    image: nginx:alpine
+    container_name: getlood-nginx
+    hostname: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - getlood-network
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - authelia
+
+# Docker secrets (for local development only)
+secrets:
+  jwt_secret:
+    file: ./secrets/jwt_secret
+  session_secret:
+    file: ./secrets/session_secret
+  encryption_key:
+    file: ./secrets/encryption_key
+  hmac_secret:
+    file: ./secrets/hmac_secret
+  pg_password:
+    file: ./secrets/pg_password
+
+# Networks
+networks:
+  getlood-network:
+    name: getlood-network
+    driver: bridge
+
+# Volumes
+volumes:
+  authelia-data:
+    name: getlood-authelia-data
+  redis-data:
+    name: getlood-redis-data
+  postgres-data:
+    name: getlood-postgres-data
+  lldap-data:
+    name: getlood-lldap-data

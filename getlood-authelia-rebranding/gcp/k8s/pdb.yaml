@@ -1,0 +1,14 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: getlood-authelia-pdb
+  namespace: auth-system
+  labels:
+    app: getlood-authelia
+    component: authentication
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: getlood-authelia

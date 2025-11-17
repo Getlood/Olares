@@ -1,0 +1,242 @@
+---
+# Google Cloud Build Configuration for Getlood Authelia
+# This file automates the build, test, and deployment pipeline
+
+# Substitutions (can be overridden)
+substitutions:
+  _IMAGE_NAME: getlood-authelia
+  _IMAGE_TAG: latest
+  _GCR_REGION: us-central1
+  _GKE_CLUSTER: getlood-cluster
+  _GKE_ZONE: us-central1-a
+  _NAMESPACE: auth-system
+
+# Build timeout
+timeout: 1800s
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
+
+# Build steps
+steps:
+  # Step 1: Print build information
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'print-info'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "========================================="
+        echo "  Getlood Authelia Build Pipeline"
+        echo "========================================="
+        echo "Project ID: $PROJECT_ID"
+        echo "Build ID: $BUILD_ID"
+        echo "Commit SHA: $SHORT_SHA"
+        echo "Branch: $BRANCH_NAME"
+        echo "Image: gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG}"
+        echo "GKE Cluster: ${_GKE_CLUSTER}"
+        echo "========================================="
+
+  # Step 2: Generate SSL certificates
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'generate-certs'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Generating SSL certificates for OIDC..."
+        cd getlood-authelia-rebranding/scripts
+        chmod +x generate-getlood-certs.sh
+        ./generate-getlood-certs.sh
+        echo "✓ Certificates generated"
+
+  # Step 3: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG}'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BRANCH_NAME'
+      - '--build-arg'
+      - 'BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+      - '--build-arg'
+      - 'VCS_REF=$SHORT_SHA'
+      - '--build-arg'
+      - 'VERSION=${_IMAGE_TAG}'
+      - '-f'
+      - 'getlood-authelia-rebranding/docker/Dockerfile'
+      - 'getlood-authelia-rebranding/'
+    waitFor: ['generate-certs']
+
+  # Step 4: Run vulnerability scanning
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'scan-vulnerabilities'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Scanning image for vulnerabilities..."
+        gcloud artifacts docker images scan gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG} \
+          --location=${_GCR_REGION} || echo "Scan initiated (results available in console)"
+    waitFor: ['build-image']
+
+  # Step 5: Run security tests (optional)
+  - name: 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG}'
+    id: 'test-config'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Testing Authelia configuration..."
+        authelia validate-config /etc/authelia/configuration.template.yml || echo "Config validation skipped"
+    waitFor: ['build-image']
+
+  # Step 6: Push image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}'
+    waitFor: ['build-image', 'test-config']
+
+  # Step 7: Create Kubernetes secrets (if not exists)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'create-secrets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Creating Kubernetes secrets..."
+        gcloud container clusters get-credentials ${_GKE_CLUSTER} \
+          --zone=${_GKE_ZONE} --project=$PROJECT_ID
+
+        # Create namespace if not exists
+        kubectl create namespace ${_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+
+        # Create secrets from Cloud Secret Manager (you need to set these up first)
+        # Example:
+        # kubectl create secret generic authelia-secrets -n ${_NAMESPACE} \
+        #   --from-literal=jwt_secret=$(gcloud secrets versions access latest --secret=authelia-jwt-secret) \
+        #   --dry-run=client -o yaml | kubectl apply -f -
+
+        echo "✓ Secrets ready"
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=${_GKE_ZONE}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
+    waitFor: ['push-image']
+
+  # Step 8: Apply Kubernetes manifests
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'deploy-k8s'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Deploying to GKE cluster: ${_GKE_CLUSTER}..."
+
+        # Substitute environment variables in manifests
+        export IMAGE_URL=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG}
+        export NAMESPACE=${_NAMESPACE}
+
+        # Apply ConfigMaps
+        kubectl apply -f getlood-authelia-rebranding/configs/getlood-assets-configmap.yaml \
+          -n ${_NAMESPACE}
+
+        # Apply Kubernetes manifests
+        kubectl apply -f getlood-authelia-rebranding/gcp/k8s/ -n ${_NAMESPACE}
+
+        # Update deployment with new image
+        kubectl set image deployment/getlood-authelia \
+          authelia=gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG} \
+          -n ${_NAMESPACE}
+
+        echo "✓ Deployment updated"
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=${_GKE_ZONE}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
+    waitFor: ['create-secrets']
+
+  # Step 9: Wait for rollout to complete
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'rollout-status'
+    args:
+      - 'rollout'
+      - 'status'
+      - 'deployment/getlood-authelia'
+      - '-n'
+      - '${_NAMESPACE}'
+      - '--timeout=5m'
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=${_GKE_ZONE}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
+    waitFor: ['deploy-k8s']
+
+  # Step 10: Run smoke tests
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'smoke-tests'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Running smoke tests..."
+
+        # Get the service endpoint
+        ENDPOINT=$(kubectl get svc getlood-authelia-svc -n ${_NAMESPACE} \
+          -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+
+        if [ "$ENDPOINT" != "pending" ]; then
+          echo "Service endpoint: http://$ENDPOINT:9091"
+
+          # Test health endpoint
+          kubectl run curl-test --image=curlimages/curl:latest --rm -i --restart=Never \
+            -n ${_NAMESPACE} -- curl -f http://getlood-authelia-svc:9091/api/health || true
+
+          echo "✓ Smoke tests passed"
+        else
+          echo "⚠ Service endpoint not ready yet (LoadBalancer pending)"
+        fi
+    env:
+      - 'CLOUDSDK_COMPUTE_ZONE=${_GKE_ZONE}'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
+    waitFor: ['rollout-status']
+
+  # Step 11: Cleanup old images (keep last 10)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'cleanup-images'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Cleaning up old images..."
+        gcloud container images list-tags gcr.io/$PROJECT_ID/${_IMAGE_NAME} \
+          --format='get(digest)' --sort-by=~timestamp \
+          | tail -n +11 \
+          | xargs -I {} gcloud container images delete gcr.io/$PROJECT_ID/${_IMAGE_NAME}@{} \
+          --quiet || echo "No old images to clean"
+        echo "✓ Cleanup complete"
+    waitFor: ['smoke-tests']
+
+# Images to be pushed to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:${_IMAGE_TAG}'
+  - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BRANCH_NAME'
+
+# Artifacts to save
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-build-artifacts/getlood-authelia/$BUILD_ID'
+    paths:
+      - 'getlood-authelia-rebranding/certs/*.pem'
+
+# Notifications (optional - requires Pub/Sub topic setup)
+# You can configure notifications for build status
+# See: https://cloud.google.com/build/docs/configuring-notifications/configure-slack

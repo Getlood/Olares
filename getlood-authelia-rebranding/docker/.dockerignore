@@ -1,0 +1,74 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+cloudbuild.yaml
+
+# Documentation
+*.md
+docs/
+
+# Tests
+tests/
+test/
+*.test
+*.spec
+
+# IDE
+.vscode
+.idea
+*.sublime-*
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Certificates (will be generated)
+certs/
+*.pem
+*.key
+*.crt
+
+# Secrets
+secrets/
+*.secret
+
+# Backups
+backups/
+*.backup
+*.bak
+
+# Build artifacts
+build/
+dist/
+target/
+
+# Dependencies (if any)
+node_modules/
+vendor/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Kubernetes
+k8s/
+*.yaml
+*.yml
+kustomize/
+
+# GCP specific
+gcp/

@@ -1,0 +1,67 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: getlood-authelia-ingress
+  namespace: auth-system
+  labels:
+    app: getlood-authelia
+    component: authentication
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "getlood-authelia-ip"
+    networking.gke.io/managed-certificates: "getlood-authelia-cert"
+    kubernetes.io/ingress.allow-http: "false"
+    cloud.google.com/backend-config: '{"default": "getlood-authelia-backend-config"}'
+    cloud.google.com/armor-config: '{"getlood-authelia-policy"}'
+spec:
+  rules:
+    - host: auth.getlood.com
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: getlood-authelia-svc
+                port:
+                  number: 9091
+
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: getlood-authelia-cert
+  namespace: auth-system
+spec:
+  domains:
+    - auth.getlood.com
+
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: getlood-authelia-backend-config
+  namespace: auth-system
+spec:
+  healthCheck:
+    checkIntervalSec: 10
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 3
+    type: HTTP
+    requestPath: /api/health
+    port: 9091
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+    affinityCookieTtlSec: 3600
+  connectionDraining:
+    drainingTimeoutSec: 60
+  timeoutSec: 30
+  logging:
+    enable: true
+    sampleRate: 1.0
+  iap:
+    enabled: false
+  securityPolicy:
+    name: "getlood-authelia-policy"

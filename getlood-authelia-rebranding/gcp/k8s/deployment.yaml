@@ -1,0 +1,207 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: getlood-authelia
+  namespace: auth-system
+  labels:
+    app: getlood-authelia
+    component: authentication
+    managed-by: cloud-build
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: getlood-authelia
+  template:
+    metadata:
+      labels:
+        app: getlood-authelia
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/api/metrics"
+    spec:
+      serviceAccountName: getlood-authelia-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      # Init container to validate configuration
+      initContainers:
+        - name: init-validate-config
+          image: gcr.io/PROJECT_ID/getlood-authelia:latest
+          command: ['sh', '-c', 'echo "Configuration validation" && ls -la /config']
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+
+      containers:
+        - name: authelia
+          image: gcr.io/PROJECT_ID/getlood-authelia:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 9091
+              protocol: TCP
+
+          env:
+            # Getlood Branding
+            - name: GETLOOD_BRANDING
+              value: "enabled"
+            - name: AUTHELIA_THEME
+              value: "getlood"
+
+            # LDAP Configuration
+            - name: AUTHELIA_LDAP_URL
+              value: "ldap://lldap-service:3890"
+            - name: AUTHELIA_LDAP_BASE_DN
+              value: "dc=getlood,dc=com"
+            - name: AUTHELIA_LDAP_USER
+              value: "cn=admin,dc=getlood,dc=com"
+            - name: AUTHELIA_LDAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: ldap_password
+
+            # Session Configuration
+            - name: AUTHELIA_SESSION_DOMAIN
+              value: "getlood.com"
+            - name: AUTHELIA_REDIS_HOST
+              value: "redis-service"
+            - name: AUTHELIA_REDIS_PORT
+              value: "6379"
+
+            # PostgreSQL Configuration
+            - name: AUTHELIA_POSTGRES_HOST
+              value: "postgres-service"
+            - name: AUTHELIA_POSTGRES_PORT
+              value: "5432"
+            - name: AUTHELIA_POSTGRES_DATABASE
+              value: "authelia"
+            - name: AUTHELIA_POSTGRES_USERNAME
+              value: "authelia"
+
+            # SMTP Configuration
+            - name: AUTHELIA_SMTP_HOST
+              value: "smtp.gmail.com"
+            - name: AUTHELIA_SMTP_PORT
+              value: "587"
+            - name: AUTHELIA_SMTP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: smtp_username
+            - name: AUTHELIA_SMTP_CHECK_ADDRESS
+              value: "noreply@getlood.com"
+
+          envFrom:
+            - secretRef:
+                name: authelia-secrets
+
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: assets
+              mountPath: /app/public/assets/getlood
+              readOnly: true
+            - name: secrets
+              mountPath: /run/secrets
+              readOnly: true
+
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 20
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+
+      volumes:
+        - name: config
+          configMap:
+            name: getlood-authelia-config
+            defaultMode: 0440
+        - name: assets
+          configMap:
+            name: getlood-authelia-assets
+            defaultMode: 0444
+        - name: secrets
+          secret:
+            secretName: authelia-secrets
+            defaultMode: 0440
+
+      # Pod anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - getlood-authelia
+                topologyKey: kubernetes.io/hostname
+
+      # Topology spread constraints
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: getlood-authelia
