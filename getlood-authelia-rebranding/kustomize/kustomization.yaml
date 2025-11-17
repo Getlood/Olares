@@ -1,0 +1,54 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Getlood Authelia Rebranding - Kustomize Configuration
+# This file patches the Olares Authelia deployment with Getlood branding
+# without modifying the original Olares source code.
+
+namespace: os-framework
+
+# Base resources to patch
+resources:
+  - ../../framework/authelia/.olares/config/cluster/deploy/auth_backend_deploy.yaml
+
+# Apply Getlood ConfigMaps
+configMapGenerator:
+  - name: getlood-authelia-config
+    files:
+      - ../configs/getlood-authelia-config.yaml
+  - name: getlood-authelia-assets
+    files:
+      - ../assets/getlood-logo.svg
+      - ../assets/getlood-theme.css
+
+# Strategic merge patches
+patchesStrategicMerge:
+  - patch-authelia-deployment.yaml
+
+# JSON patches for specific fields
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: authelia-backend
+      namespace: os-framework
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/volumeMounts
+        value:
+          - name: config
+            mountPath: /app/configuration.yml
+            subPath: configuration.yaml
+          - name: assets
+            mountPath: /app/public/assets
+          - name: data
+            mountPath: /config
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: assets
+          configMap:
+            name: getlood-authelia-assets
+            defaultMode: 438
