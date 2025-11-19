@@ -1,0 +1,308 @@
+/*
+ * Getlood Theme for Authelia
+ * Custom CSS to rebrand the Authelia login interface with Getlood colors and branding
+ */
+
+:root {
+  /* Getlood Brand Colors */
+  --getlood-primary: #0066FF;
+  --getlood-secondary: #00CC99;
+  --getlood-dark: #001F3F;
+  --getlood-light: #E6F2FF;
+  --getlood-gradient: linear-gradient(135deg, #0066FF 0%, #00CC99 100%);
+
+  /* Text Colors */
+  --getlood-text-primary: #1A1A1A;
+  --getlood-text-secondary: #666666;
+  --getlood-text-light: #FFFFFF;
+
+  /* Status Colors */
+  --getlood-success: #00CC99;
+  --getlood-error: #FF4444;
+  --getlood-warning: #FFAA00;
+
+  /* UI Elements */
+  --getlood-border: #E0E0E0;
+  --getlood-shadow: rgba(0, 102, 255, 0.1);
+}
+
+/* Main Container */
+body {
+  background: var(--getlood-gradient);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
+/* Login Card */
+.login-container,
+#root > div,
+.auth-container {
+  background: var(--getlood-text-light);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px var(--getlood-shadow);
+  backdrop-filter: blur(10px);
+}
+
+/* Logo */
+.logo,
+.brand-logo,
+img[alt*="logo"],
+img[src*="logo"] {
+  content: url('/assets/getlood-logo.svg');
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.login-header,
+.auth-header,
+h1 {
+  color: var(--getlood-primary);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Input Fields */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+.input-field {
+  border: 2px solid var(--getlood-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+.input-field:focus {
+  border-color: var(--getlood-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+/* Buttons */
+button,
+.button,
+input[type="submit"],
+.btn-primary {
+  background: var(--getlood-gradient);
+  color: var(--getlood-text-light);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--getlood-shadow);
+}
+
+button:hover,
+.button:hover,
+input[type="submit"]:hover,
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--getlood-shadow);
+}
+
+button:active,
+.button:active,
+input[type="submit"]:active,
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: transparent;
+  color: var(--getlood-primary);
+  border: 2px solid var(--getlood-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--getlood-light);
+}
+
+/* Links */
+a {
+  color: var(--getlood-primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--getlood-secondary);
+  text-decoration: underline;
+}
+
+/* 2FA Code Input */
+.totp-input,
+input[name="token"],
+input[placeholder*="code"] {
+  text-align: center;
+  letter-spacing: 0.5em;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--getlood-primary);
+}
+
+/* QR Code Container */
+.qr-code-container {
+  background: var(--getlood-text-light);
+  border: 2px solid var(--getlood-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+/* Success Messages */
+.success,
+.alert-success,
+.message-success {
+  background: rgba(0, 204, 153, 0.1);
+  color: var(--getlood-success);
+  border: 1px solid var(--getlood-success);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+/* Error Messages */
+.error,
+.alert-error,
+.message-error {
+  background: rgba(255, 68, 68, 0.1);
+  color: var(--getlood-error);
+  border: 1px solid var(--getlood-error);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+/* Warning Messages */
+.warning,
+.alert-warning,
+.message-warning {
+  background: rgba(255, 170, 0, 0.1);
+  color: var(--getlood-warning);
+  border: 1px solid var(--getlood-warning);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+/* Loading Spinner */
+.spinner,
+.loading {
+  border: 3px solid var(--getlood-light);
+  border-top: 3px solid var(--getlood-primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Footer */
+.footer,
+.auth-footer {
+  text-align: center;
+  color: var(--getlood-text-secondary);
+  font-size: 14px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.footer::after,
+.auth-footer::after {
+  content: ' Powered by Getlood';
+  color: var(--getlood-primary);
+  font-weight: 600;
+}
+
+/* Checkbox */
+input[type="checkbox"] {
+  accent-color: var(--getlood-primary);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* Remember Me */
+.remember-me,
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .login-container,
+  #root > div,
+  .auth-container {
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  button,
+  .button,
+  input[type="submit"] {
+    width: 100%;
+    padding: 16px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --getlood-text-primary: #FFFFFF;
+    --getlood-text-secondary: #CCCCCC;
+    --getlood-border: #333333;
+  }
+
+  .login-container,
+  #root > div,
+  .auth-container {
+    background: rgba(26, 26, 26, 0.95);
+    color: var(--getlood-text-primary);
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  .input-field {
+    background: #2A2A2A;
+    color: var(--getlood-text-primary);
+    border-color: var(--getlood-border);
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-container,
+#root > div,
+.auth-container {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+  outline: 3px solid var(--getlood-primary);
+  outline-offset: 2px;
+}

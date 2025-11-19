@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authelia-configs
+  namespace: os-framework
+data:
+  configuration.yaml: |
+    # This ConfigMap will be replaced by getlood-authelia-config
+    # See: ../configs/getlood-authelia-config.yaml
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia-backend
+  namespace: os-framework
+spec:
+  template:
+    metadata:
+      annotations:
+        # Force pod restart when config changes
+        getlood.com/config-version: "1.0"
+    spec:
+      containers:
+      - name: authelia
+        env:
+        - name: AUTHELIA_THEME
+          value: "getlood"
+        - name: GETLOOD_BRANDING
+          value: "enabled"
+        volumeMounts:
+        - name: config
+          mountPath: /app/configuration.yml
+          subPath: configuration.yaml
+        - name: assets
+          mountPath: /app/public/assets
+        - name: data
+          mountPath: /config
+      volumes:
+      - name: config
+        configMap:
+          name: getlood-authelia-config
+          defaultMode: 438
+          items:
+          - key: configuration.yaml
+            path: configuration.yaml
+      - name: assets
+        configMap:
+          name: getlood-authelia-assets
+          defaultMode: 438
