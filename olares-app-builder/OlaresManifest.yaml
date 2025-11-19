@@ -1,0 +1,64 @@
+olaresManifest.version: '0.9.0'
+olaresManifest.type: app
+
+metadata:
+  name: olares-app-builder
+  appid: fa9bbad7
+  title: App Builder
+  description: Create custom Olares applications with an interactive wizard
+  icon: https://file.bttcdn.com/appstore/default/defaulticon.webp
+  version: 0.1.0
+  categories:
+    - Utilities
+
+entrances:
+  - name: web
+    host: olares-app-builder
+    port: 3000
+    title: App Builder
+    authLevel: private
+
+permission:
+  appData: true
+  appCache: false
+
+spec:
+  versionName: '0.1.0'
+  promoteImage:
+    - rachidgetlood/getlood-app-builder:1.0.0
+  supportArch:
+    - arm64
+  fullDescription: |
+    # App Builder
+
+    Interactive wizard to create custom Olares applications from GitHub repositories.
+
+    ## Features
+    - Import from GitHub repositories with auto-detection
+    - Guided wizard with 6 steps
+    - Auto-detect Docker configuration (Dockerfile, docker-compose.yml)
+    - Generate complete Helm charts automatically
+    - Built-in validation with helm lint
+    - Template library for common app types
+    - Download ready-to-deploy packages
+
+    ## How to use
+    1. Open App Builder from Olares Desktop
+    2. Click "Create New Application"
+    3. Follow the 6-step wizard
+    4. Enter GitHub repository URL or Docker image
+    5. Configure ports, storage, and environment variables
+    6. Download the generated .tar.gz package
+    7. Upload to Olares Market and install
+
+  requiredMemory: 256Mi
+  requiredDisk: 1Gi
+  requiredCpu: 0.1
+  limitedMemory: 1Gi
+  limitedCpu: 1
+
+options:
+  dependencies:
+    - name: terminus
+      version: ">=1.6.0-0"
+      type: system

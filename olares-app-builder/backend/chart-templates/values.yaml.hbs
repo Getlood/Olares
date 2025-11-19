@@ -1,0 +1,25 @@
+image:
+  repository: {{docker.repository}}
+  pullPolicy: {{docker.pullPolicy}}
+  tag: "{{docker.tag}}"
+
+resources:
+  limits:
+    cpu: {{resources.limits.cpu}}
+    memory: {{resources.limits.memory}}
+  requests:
+    cpu: {{resources.requests.cpu}}
+    memory: {{resources.requests.memory}}
+
+{{#if storage.pvc.enabled}}
+persistence:
+  size: {{storage.pvc.size}}
+  storageClass: ""
+{{/if}}
+
+{{#if environment}}
+config:
+{{#each environment}}
+  {{name}}: "{{value}}"
+{{/each}}
+{{/if}}

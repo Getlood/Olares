@@ -1,0 +1,33 @@
+image:
+  repository: rachidgetlood/getlood-app-builder
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+# Docker registry credentials for private images
+# Set enabled: true only if your image is private
+imagePullSecrets:
+  enabled: false
+  name: dockerhub-secret
+  registry: https://index.docker.io/v1/
+  username: ""
+  password: ""
+  email: ""
+
+# Olares userspace paths (injected by Olares)
+userspace:
+  appData: /terminus/userdata/appdata
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+persistence:
+  size: 5Gi
+
+config:
+  githubToken: ""
+  nodeEnv: "production"

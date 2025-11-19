@@ -1,0 +1,15 @@
+Stalwart Mail Server has been installed!
+
+To access the web interface:
+1. Open Olares Desktop
+2. Click on "Stalwart Admin"
+
+Default credentials:
+- Username: admin
+- Password: {{ .Values.config.adminPassword }}
+
+IMPORTANT: Change the default password immediately after first login!
+
+For more information:
+- Documentation: https://stalw.art/docs
+- Source code: https://github.com/stalwartlabs/stalwart

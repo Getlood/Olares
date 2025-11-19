@@ -1,0 +1,27 @@
+# Documentation
+*.md
+!README.md
+!templates/NOTES.txt
+
+# Development
+.git/
+.gitignore
+.DS_Store
+*.swp
+*.bak
+*.tmp
+
+# Application source
+backend/
+frontend/
+node_modules/
+Dockerfile
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Testing
+test/
+tests/

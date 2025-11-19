@@ -1,0 +1,18 @@
+{{#if storage.pvc.enabled}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: \{{ include "{{metadata.name}}.fullname" . }}-data
+  namespace: \{{ .Release.Namespace }}
+  labels:
+    \{{- include "{{metadata.name}}.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: \{{ .Values.persistence.size }}
+  \{{- if .Values.persistence.storageClass }}
+  storageClassName: \{{ .Values.persistence.storageClass }}
+  \{{- end }}
+{{/if}}

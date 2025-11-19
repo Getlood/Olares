@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: \{{ include "{{metadata.name}}.fullname" . }}
+  namespace: \{{ .Release.Namespace }}
+  labels:
+    \{{- include "{{metadata.name}}.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      \{{- include "{{metadata.name}}.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        \{{- include "{{metadata.name}}.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{metadata.name}}
+        image: "\{{ .Values.image.repository }}:\{{ .Values.image.tag }}"
+        imagePullPolicy: \{{ .Values.image.pullPolicy }}
+
+        ports:
+{{#each ports}}
+        - name: {{name}}
+          containerPort: {{containerPort}}
+          protocol: {{protocol}}
+{{/each}}
+
+{{#if environment}}
+        env:
+{{#each environment}}
+        - name: {{name}}
+          value: "\{{ .Values.config.{{name}} }}"
+{{/each}}
+{{/if}}
+
+        livenessProbe:
+{{#if probes.liveness.type}}
+{{#if (eq probes.liveness.type "tcpSocket")}}
+          tcpSocket:
+            port: {{probes.liveness.port}}
+{{else if (eq probes.liveness.type "httpGet")}}
+          httpGet:
+            path: {{probes.liveness.path}}
+            port: {{probes.liveness.port}}
+{{/if}}
+          initialDelaySeconds: {{probes.liveness.initialDelaySeconds}}
+          periodSeconds: {{probes.liveness.periodSeconds}}
+{{else}}
+          tcpSocket:
+            port: {{ports.[0].name}}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+{{/if}}
+
+        readinessProbe:
+{{#if probes.readiness.type}}
+{{#if (eq probes.readiness.type "tcpSocket")}}
+          tcpSocket:
+            port: {{probes.readiness.port}}
+{{else if (eq probes.readiness.type "httpGet")}}
+          httpGet:
+            path: {{probes.readiness.path}}
+            port: {{probes.readiness.port}}
+{{/if}}
+          initialDelaySeconds: {{probes.readiness.initialDelaySeconds}}
+          periodSeconds: {{probes.readiness.periodSeconds}}
+{{else}}
+          tcpSocket:
+            port: {{ports.[0].name}}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+{{/if}}
+
+        resources:
+          \{{- toYaml .Values.resources | nindent 10 }}
+
+        volumeMounts:
+{{#if storage.pvc.enabled}}
+        - name: data
+          mountPath: {{storage.pvc.mountPath}}
+{{/if}}
+{{#if storage.appData.enabled}}
+        - name: appdata
+          mountPath: {{storage.appData.mountPath}}
+{{/if}}
+{{#if storage.appCache.enabled}}
+        - name: appcache
+          mountPath: {{storage.appCache.mountPath}}
+{{/if}}
+
+      volumes:
+{{#if storage.pvc.enabled}}
+      - name: data
+        persistentVolumeClaim:
+          claimName: \{{ include "{{metadata.name}}.fullname" . }}-data
+{{/if}}
+{{#if storage.appData.enabled}}
+      - name: appdata
+        hostPath:
+          path: \{{ .Values.userspace.appData }}/{{metadata.name}}
+          type: DirectoryOrCreate
+{{/if}}
+{{#if storage.appCache.enabled}}
+      - name: appcache
+        hostPath:
+          path: \{{ .Values.userspace.appCache }}/{{metadata.name}}
+          type: DirectoryOrCreate
+{{/if}}

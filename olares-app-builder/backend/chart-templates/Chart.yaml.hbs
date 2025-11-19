@@ -1,0 +1,11 @@
+apiVersion: v2
+name: {{metadata.name}}
+description: {{metadata.description}}
+type: application
+version: {{metadata.version}}
+appVersion: "{{docker.tag}}"
+maintainers:
+  - name: {{metadata.maintainer.name}}
+{{#if metadata.maintainer.email}}
+    email: {{metadata.maintainer.email}}
+{{/if}}

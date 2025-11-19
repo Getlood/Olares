@@ -1,0 +1,26 @@
+Thank you for installing \{{ .Chart.Name }}!
+
+Your application has been deployed to namespace: \{{ .Release.Namespace }}
+
+To access the application:
+1. Open the Olares Desktop
+2. Click on the "{{metadata.title}}" icon
+{{#if environment}}
+3. Log in with the default credentials (if applicable)
+{{#each environment}}
+{{#if secret}}
+   - {{name}}: {{value}}
+{{/if}}
+{{/each}}
+
+IMPORTANT: Please change the default credentials immediately!
+{{/if}}
+
+For more information:
+- Documentation: {{#if metadata.website}}{{metadata.website}}{{else}}https://github.com/beclab/Olares{{/if}}
+
+To check the deployment status:
+  kubectl get pods -n \{{ .Release.Namespace }} | grep \{{ include "{{metadata.name}}.fullname" . }}
+
+To view logs:
+  kubectl logs -n \{{ .Release.Namespace }} -l app.kubernetes.io/name=\{{ include "{{metadata.name}}.name" . }}

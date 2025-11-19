@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: \{{ include "{{metadata.name}}.fullname" . }}
+  namespace: \{{ .Release.Namespace }}
+  labels:
+    \{{- include "{{metadata.name}}.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+{{#each ports}}
+  - name: {{name}}
+    port: {{containerPort}}
+    targetPort: {{name}}
+    protocol: {{protocol}}
+{{/each}}
+  selector:
+    \{{- include "{{metadata.name}}.selectorLabels" . | nindent 4 }}

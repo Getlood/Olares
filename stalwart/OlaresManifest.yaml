@@ -1,0 +1,66 @@
+olaresManifest.version: '0.9.0'
+olaresManifest.type: app
+
+metadata:
+  name: stalwart
+  appid: e51f5a8f
+  title: Stalwart Mail Server
+  description: Modern all-in-one email server with IMAP, JMAP, and SMTP
+  icon: https://raw.githubusercontent.com/stalwartlabs/stalwart/main/resources/logo.svg
+  version: 0.1.0
+  categories:
+    - Utilities
+
+entrances:
+  - name: admin
+    host: stalwart
+    port: 8080
+    title: Stalwart Admin
+    authLevel: private
+
+permission:
+  appData: true
+  appCache: true
+
+spec:
+  versionName: '0.1.0'
+  fullDescription: |
+    Stalwart Mail Server is a modern, secure, and scalable all-in-one email server.
+
+    **Features:**
+    - IMAP4rev2, JMAP, and SMTP support
+    - Built-in spam filtering
+    - Web-based administration
+    - TLS/SSL encryption
+    - Sieve filtering
+
+    **Note:** This is a complete rewrite of the chart following Olares guidelines.
+
+  upgradeDescription: |
+    Version 0.1.0 - Complete chart rewrite:
+    - Simplified structure following Olares guidelines
+    - Correct Docker image: stalwartlabs/stalwart:latest
+    - Optimized resource configuration
+    - Proper volume mounts
+
+  developer: Stalwart Labs
+  website: https://stalw.art
+  sourceCode: https://github.com/stalwartlabs/stalwart
+  submitter: Olares Community
+  locale:
+    - en
+  doc: https://stalw.art/docs
+  supportArch:
+    - amd64
+    - arm64
+  requiredMemory: 256Mi
+  requiredDisk: 512Mi
+  requiredCpu: 100m
+  limitedMemory: 1Gi
+  limitedCpu: 1000m
+
+options:
+  dependencies:
+    - name: olares
+      type: system
+      version: '>=0.1.0'

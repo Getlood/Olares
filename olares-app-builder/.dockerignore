@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.DS_Store
+*.md
+!backend/chart-templates/*.md.hbs
+.env
+.vscode
+frontend/node_modules
+frontend/build
+backend/node_modules

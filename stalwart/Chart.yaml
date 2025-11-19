@@ -1,0 +1,8 @@
+apiVersion: v2
+name: stalwart
+description: Modern all-in-one email server (IMAP, JMAP, SMTP)
+type: application
+version: 0.1.0
+appVersion: "latest"
+maintainers:
+  - name: community

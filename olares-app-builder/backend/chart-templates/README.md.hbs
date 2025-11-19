@@ -1,0 +1,68 @@
+# {{metadata.title}}
+
+{{metadata.description}}
+
+## Installation
+
+1. Open Olares DevBox/Studio
+2. Upload the chart package
+3. Click Install
+4. Wait for deployment to complete
+
+## First Access
+
+1. Open the app from Olares Desktop
+{{#if environment}}
+2. Default credentials:
+{{#each environment}}
+{{#if secret}}
+   - {{name}}: `{{value}}`
+{{/if}}
+{{/each}}
+3. **Important**: Change the default credentials immediately
+{{/if}}
+
+## Ports
+
+This application exposes the following ports:
+
+{{#each ports}}
+- **{{containerPort}}** ({{name}}): {{description}}
+{{/each}}
+
+{{#if storage.pvc.enabled}}
+## Persistence
+
+This application stores data in:
+{{#if storage.appData.enabled}}
+- `{{storage.appData.mountPath}}`: Application data
+{{/if}}
+{{#if storage.appCache.enabled}}
+- `{{storage.appCache.mountPath}}`: Cache files
+{{/if}}
+- PVC `{{metadata.name}}-data`: Critical persistent data ({{storage.pvc.size}})
+{{/if}}
+
+## Resource Requirements
+
+- **Memory**: {{resources.requests.memory}} - {{resources.limits.memory}}
+- **CPU**: {{resources.requests.cpu}} - {{resources.limits.cpu}}
+{{#if storage.pvc.enabled}}
+- **Storage**: {{storage.pvc.size}}
+{{/if}}
+
+{{#if metadata.website}}
+## Support
+
+- Website: {{metadata.website}}
+{{/if}}
+{{#if metadata.documentation}}
+- Documentation: {{metadata.documentation}}
+{{/if}}
+{{#if metadata.issues}}
+- Issues: {{metadata.issues}}
+{{/if}}
+
+## Generated with App Builder
+
+This chart was generated using the Olares App Builder.

@@ -1,0 +1,85 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  ✅ STALWART MAIL SERVER - CHART PRÊT POUR L'UPLOAD         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+📍 Emplacement du package :
+   /Users/user/Documents/Getlood/Olares/stalwart.tar.gz
+
+📊 Taille : 13 KB
+
+✅ Problèmes résolus :
+   1. metadata.appid ajouté : e51f5a8f
+   2. Nom du dossier corrigé : stalwart-mail → stalwart
+
+🔍 Validation :
+   ✓ Nom du dossier : stalwart
+   ✓ Chart.yaml name : stalwart
+   ✓ OlaresManifest.yaml name : stalwart
+   ✓ metadata.appid : e51f5a8f
+
+🚀 Prochaines étapes :
+   1. Ouvrir DevBox/Studio dans Olares
+   2. Importer stalwart.tar.gz
+   3. Attendre la validation
+   4. Installer et configurer !
+
+📚 Documentation disponible dans stalwart/ :
+   • QUICK_START.md - Guide de démarrage rapide
+   • VALIDATION_CHECKLIST.md - Checklist de validation
+   • TROUBLESHOOTING.md - Dépannage
+   • INSTALLATION_GUIDE.md - Guide complet
+   • README.md - Documentation de l'application
+
+💡 Note importante :
+   N'oubliez pas de mettre à jour le fichier 'owners' avec
+   votre vrai username GitHub avant de soumettre au Market !
+
+══════════════════════════════════════════════════════════════════
+
+DÉTAILS TECHNIQUES :
+
+Chart Name        : stalwart
+Chart Version     : 0.0.1
+App Version       : 0.10.7
+App ID            : e51f5a8f (MD5 de "stalwart" tronqué à 8 chars)
+
+Ports exposés :
+  - 25   : SMTP
+  - 587  : SMTP Submission
+  - 465  : SMTPS
+  - 143  : IMAP
+  - 993  : IMAPS
+  - 110  : POP3
+  - 995  : POP3S
+  - 8080 : Web Admin
+
+Middleware :
+  - PostgreSQL (configuré automatiquement par Olares)
+
+Permissions :
+  - appData : ✓
+  - appCache : ✓
+  - userData : Home/Documents/
+
+Ressources :
+  - Minimum : 256 Mi RAM, 100m CPU, 1 Gi disque
+  - Maximum : 2 Gi RAM, 2000m CPU
+
+══════════════════════════════════════════════════════════════════
+
+HISTORIQUE DES ERREURS CORRIGÉES :
+
+Erreur 1 (première tentative) :
+  ❌ "metadata.appid is required"
+  ✅ Corrigé en ajoutant appid: e51f5a8f dans OlaresManifest.yaml
+
+Erreur 2 (deuxième tentative) :
+  ❌ "name in Chart.yaml:stalwart, chartFolder:stalwart-mail,
+      name in OlaresManifest.yaml:stalwart must same"
+  ✅ Corrigé en renommant le dossier stalwart-mail → stalwart
+
+══════════════════════════════════════════════════════════════════
+
+╔═══════════════════════════════════════════════════════════════╗
+║  Le chart est maintenant prêt pour l'upload ! 🚀             ║
+╚═══════════════════════════════════════════════════════════════╝
